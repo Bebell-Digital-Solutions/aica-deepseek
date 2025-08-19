@@ -719,28 +719,16 @@ Tone: Professional yet conversational, motivational.
 
 
     // FileUploadModal component
-    const FileUploadModal = ({ uploadedFiles, setUploadedFiles, onClose }) => {
-      const [error, setError] = useState(null);
-      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+   const FileUploadModal = ({ uploadedFiles, setUploadedFiles, onClose }) => {
+  const [error, setError] = useState(null);
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
-      const handleFileChange = useCallback(e => {
-        const files = e.target.files;
-        if (!files) return;
-        setError(null);
-        
-        const validFiles = Array.from(files).filter(file => {
-          if (file.size > MAX_FILE_SIZE) {
-            setError(`File "${file.name}" is too large (max 5MB).`);
-            return false;
-          }
+  const handleFileChange = useCallback(async e => {
+    const files = e.target.files;
+    if (!files) return;
+    setError(null);
 
-            // Get file extension
-    const extension = file.name.split('.').pop().toLowerCase();
-    
-    // Check MIME type or extension
-    const allowedTypes = [
-      'html', 'json', 'jpeg', 'jpg', 'png', 'pdf', 'doc', 'docx'
-    ];
+    const allowedTypes = ['html', 'json', 'jpeg', 'jpg', 'png', 'pdf', 'doc', 'docx'];
     const allowedMimeTypes = [
       'application/json',
       'text/html',
@@ -751,31 +739,51 @@ Tone: Professional yet conversational, motivational.
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
 
-    const isValid = 
-      allowedTypes.includes(extension) ||
-      allowedMimeTypes.includes(file.type);
+    const validFiles = [];
+    
+    for (const file of files) {
+      // Check size
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File "${file.name}" is too large (max 5MB).`);
+        continue;
+      }
 
-    if (!isValid) {
-      setError(`File "${file.name}" is not a supported type.`);
-      return false;
+      // Check extension and MIME type
+      const extension = file.name.split('.').pop().toLowerCase();
+      const isValidType = 
+        allowedTypes.includes(extension) || 
+        allowedMimeTypes.includes(file.type);
+
+      if (!isValidType) {
+        setError(`File "${file.name}" is not a supported type.`);
+        continue;
+      }
+
+      validFiles.push(file);
     }
-          return true;
-        });
 
-        validFiles.forEach(file => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            if(event.target?.result) {
-              setUploadedFiles(prev => [...prev.filter(f => f.name !== file.name), { 
-                name: file.name, 
-                content: event.target.result 
-              }]);
-            }
-          };
-          reader.onerror = () => setError(`Error reading file "${file.name}".`);
-          reader.readAsText(file);
-        });
-      }, [setUploadedFiles]);
+    // Process valid files
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setUploadedFiles(prev => [...prev.filter(f => f.name !== file.name), { 
+            name: file.name, 
+            content: event.target.result 
+          }]);
+        }
+      };
+      reader.onerror = () => setError(`Error reading file "${file.name}".`);
+      
+      // Read as appropriate format
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file); // For images
+      } else {
+        reader.readAsText(file); // For text-based files
+      }
+    });
+  }, [setUploadedFiles]);
+
 
       
       
