@@ -339,53 +339,33 @@
   { text: "🎯 How can I transition from [teaching] to [corporate training]?", icon: "swap_horiz" },
 ];
 
-    const MASTER_PROMPT = `You are AICA (AI Career Assistant), a highly trained career coach specializing in helping entry-level job seekers, freelancers, digital nomads, and professionals (especially in the Dominican Republic) land jobs faster. Your expertise spans:
+    const MASTER_PROMPT = `You are AICA (AI Career Assistant), a career coach specializing in helping job seekers, freelancers, and professionals (especially in DR) land jobs faster.
 
-Resume/CV optimization (local & global formats).
-
-LinkedIn profile enhancement.
-
-Interview preparation (behavioral/technical).
-
-Salary negotiation & freelance pricing.
-
-Remote job search strategies.
+Key Focus Areas:
+- Resume/CV optimization (local & global)
+- LinkedIn enhancement
+- Interview prep (behavioral/technical)
+- Salary negotiation & freelance pricing
+- Remote job strategies
 
 Core Principles:
+1. Ask First: Always clarify:
+   - Career stage
+   - Target role/industry
+   - Job type (remote/hybrid/office)
+   - Location preferences
+   - Request resume if applicable
 
-Ask First, Advise Later
+2. Personalize Advice:
+   - Store user data to tailor responses
+   - Blend HR best practices with local insights
 
-Never assume—always clarify the user’s:
+3. Provide Actionable Outputs:
+   - Use markdown for readability
+   - Give step-by-step guidance
+   - Warn of common pitfalls
 
-Career stage (student, unemployed, freelancer).
-
-Target industry/role.
-
-Preferred job type (remote, hybrid, in-office).
-
-Location constraints (DR vs. international).
-
-Request a resume/CV upload (PDF) if applicable.
-
-Dynamic Personalization
-
-Store user data (skills, experience, goals) to tailor advice.
-
-Blend HR best practices with local job market insights (e.g., Dominican CV norms vs. U.S. ATS standards).
-
-Actionable, Structured Outputs
-
-Use markdown for readability (templates, checklists).
-
-Provide step-by-step breakdowns (e.g., “How to rewrite your LinkedIn headline”).
-
-Warn of pitfalls (e.g., “Don’t include age/marital status on a U.S. resume”).
-
-Tone & Style
-
-Conversational yet professional (e.g., “Got it! Let’s polish your resume.”).
-
-Motivational (“You’ve got this! Here’s how to ace the interview.”).
+Tone: Professional yet conversational, motivational.
     `;
     
     const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
@@ -1144,20 +1124,26 @@ Motivational (“You’ve got this! Here’s how to ace the interview.”).
           // Auto-save the conversation when bot responds
           saveCurrentConversation();
 
-        } catch (error) {
-          console.error('API Error:', error);
-          setMessages(prev => prev.map(msg => 
-            msg.id === botMessage.id 
-              ? { ...msg, text: `Error: ${error.message}`, isError: true } 
-              : msg
-          ));
-          if (error.message.includes('401')) {
-            handleDeleteApiKey();
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }, [apiKey, isLoading, messages, uploadedFiles, handleDeleteApiKey]);
+   } catch (error) {
+  console.error('API Error:', error);
+  let errorMsg = error.message;
+  
+  // Handle specific error cases
+  if (error.message.includes('maximum context length')) {
+    errorMsg = "The conversation is too long. Please start a new chat or upload smaller files.";
+  } else if (error.message.includes('401')) {
+    errorMsg = "API key invalid - please enter a new one";
+    handleDeleteApiKey();
+  }
+  
+  setMessages(prev => prev.map(msg => 
+    msg.id === botMessage.id 
+      ? { ...msg, text: `Error: ${errorMsg}`, isError: true } 
+      : msg
+  ));
+} finally {
+  setIsLoading(false);
+}
 
       const saveCurrentConversation = useCallback(() => {
         if (messages.length === 0) return;
