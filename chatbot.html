@@ -643,16 +643,16 @@ Tone: Professional yet conversational, motivational.
 // Header component
 const Header = ({ onSuggestionClick, userName }) => {
   return (
-    <header className={'flex-1 overflow-y-auto px-5 pb-0 pt-48 sm:pt-60 lg:pt-80'}>  
-      <div className="max-w-4xl mx-auto">
+    <header className={'flex-1 overflow-y-auto px-6 pb-0 pt-48 sm:px-8 sm:pt-60 lg:pt-80'}>  
+      <div className="max-w-3xl mx-auto"> {/* Reduced from max-w-4xl */}
         <div>
           <h1 className="text-5xl sm:text-6xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-brand-pink to-purple-500">
             {userName ? `Hello, ${userName}` : 'Hello, there'}
           </h1>
           <p className="text-4xl sm:text-5xl font-medium text-gray-400 dark:text-gray-500 mt-2"> Let's launch your career! 🚀</p>
         </div>
-              <div className="mt-16 sm:mt-24">
-          <div className="flex gap-5 pb-4 -mx-5 px-5 overflow-x-auto">
+        <div className="mt-16 sm:mt-24">
+          <div className="flex gap-5 pb-4 -mx-6 px-6 overflow-x-auto sm:-mx-8 sm:px-8">
             {SUGGESTIONS.map((s, i) => (
               <SuggestionCard 
                 key={i} 
@@ -663,12 +663,10 @@ const Header = ({ onSuggestionClick, userName }) => {
             ))}
           </div>
         </div>
-          </div>
-        </header>
-      );
-    };
-
-
+      </div>
+    </header>
+  );
+};
 
 
 
