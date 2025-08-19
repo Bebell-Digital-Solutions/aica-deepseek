@@ -335,11 +335,10 @@
   { text: "🎯 Recommend free online courses to learn [social media management].", icon: "school" },
   { text: "🎯 Write a LinkedIn post announcing I’m open to new opportunities.", icon: "post_add" },
   { text: "🎯 What should I include in a portfolio for a [UX designer] role?", icon: "palette" },
-
   { text: "🎯 How can I transition from [teaching] to [corporate training]?", icon: "swap_horiz" },
 ];
 
-    const MASTER_PROMPT = `You are AICA (AI Career Assistant), a career coach specializing in helping job seekers, freelancers, and professionals (especially in DR) land jobs faster.
+    const MASTER_PROMPT = `You are AICA (AI Career Assistant), a career coach specializing in helping job seekers, freelancers, and professionals (especially in the Dominican Republic and latin america) land jobs faster.
 
 Key Focus Areas:
 - Resume/CV optimization (local & global)
@@ -406,6 +405,9 @@ Tone: Professional yet conversational, motivational.
         return this.props.children;
       }
     }
+
+
+  
     
     // Components
     const BotIcon = () => (
@@ -815,6 +817,15 @@ Tone: Professional yet conversational, motivational.
       );
     };
 
+
+
+
+
+
+
+
+  
+
     // ConversationsModal component
     const ConversationsModal = ({ conversations, onSelectConversation, onClose, onDeleteConversation }) => {
       return (
@@ -968,7 +979,7 @@ Tone: Professional yet conversational, motivational.
               </div>
             </div>
             <p className="hidden sm:block text-center text-xs text-gray-400 dark:text-gray-500 mt-3 px-4">
-              AIBAD may display inaccurate info. Always double-check its responses.
+              Aica may display inaccurate info. Always double-check its responses.
             </p>
           </div>
         </div>
@@ -1093,6 +1104,34 @@ Tone: Professional yet conversational, motivational.
             { role: 'user', content: fileContext ? `${fileContext}\n\n${inputText}` : inputText }
           ];
 
+          
+
+
+  // ====== AUTO-TRIMMING LOGIC START ======
+  function estimateTokens(text) {
+    return Math.ceil(text.split(/[\s,.;:!?]+/).length * 1.33);
+  }
+
+  let totalTokens = messagesForApi.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
+
+  if (totalTokens > 60000) {
+    // Phase 1: Remove oldest messages (keep system prompt + last exchange)
+    let i = 1; // Start after system prompt
+    while (totalTokens > 60000 && i < messagesForApi.length - 2) {
+      totalTokens -= estimateTokens(messagesForApi[i].content);
+      messagesForApi.splice(i, 1);
+    }
+
+    // Phase 2: If still over, truncate file content
+    if (totalTokens > 60000 && fileContext) {
+      const shortenedContext = fileContext.substring(0, 2000) + "... [truncated]";
+      messagesForApi[messagesForApi.length-1].content = `${shortenedContext}\n\n${inputText}`;
+      totalTokens = messagesForApi.reduce((sum, msg) => sum + estimateTokens(msg.content), 0);
+    }
+  }
+  // ====== AUTO-TRIMMING LOGIC END ======
+          
+
           const response = await fetch(DEEPSEEK_API_URL, {
             method: 'POST',
             headers: {
@@ -1124,26 +1163,20 @@ Tone: Professional yet conversational, motivational.
           // Auto-save the conversation when bot responds
           saveCurrentConversation();
 
-   } catch (error) {
-  console.error('API Error:', error);
-  let errorMsg = error.message;
-  
-  // Handle specific error cases
-  if (error.message.includes('maximum context length')) {
-    errorMsg = "The conversation is too long. Please start a new chat or upload smaller files.";
-  } else if (error.message.includes('401')) {
-    errorMsg = "API key invalid - please enter a new one";
-    handleDeleteApiKey();
-  }
-  
-  setMessages(prev => prev.map(msg => 
-    msg.id === botMessage.id 
-      ? { ...msg, text: `Error: ${errorMsg}`, isError: true } 
-      : msg
-  ));
-} finally {
-  setIsLoading(false);
-}
+    } catch (error) {
+          console.error('API Error:', error);
+          setMessages(prev => prev.map(msg => 
+            msg.id === botMessage.id 
+              ? { ...msg, text: `Error: ${error.message}`, isError: true } 
+              : msg
+          ));
+          if (error.message.includes('401')) {
+            handleDeleteApiKey();
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }, [apiKey, isLoading, messages, uploadedFiles, handleDeleteApiKey]);
 
       const saveCurrentConversation = useCallback(() => {
         if (messages.length === 0) return;
