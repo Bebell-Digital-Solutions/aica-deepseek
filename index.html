@@ -733,6 +733,32 @@ Tone: Professional yet conversational, motivational.
             setError(`File "${file.name}" is too large (max 5MB).`);
             return false;
           }
+
+            // Get file extension
+    const extension = file.name.split('.').pop().toLowerCase();
+    
+    // Check MIME type or extension
+    const allowedTypes = [
+      'html', 'json', 'jpeg', 'jpg', 'png', 'pdf', 'doc', 'docx'
+    ];
+    const allowedMimeTypes = [
+      'application/json',
+      'text/html',
+      'image/jpeg',
+      'image/png',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    const isValid = 
+      allowedTypes.includes(extension) ||
+      allowedMimeTypes.includes(file.type);
+
+    if (!isValid) {
+      setError(`File "${file.name}" is not a supported type.`);
+      return false;
+    }
           return true;
         });
 
@@ -750,6 +776,8 @@ Tone: Professional yet conversational, motivational.
           reader.readAsText(file);
         });
       }, [setUploadedFiles]);
+
+      
       
       const removeFile = fileName => {
         setUploadedFiles(prev => prev.filter(f => f.name !== fileName));
